@@ -107,11 +107,11 @@ function App() {
 
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
+        const regExp = /[^0-9]/g;
+
         if (name !== "myRanking" && name !== "opponentRanking") {
             return;
         }
-
-        const regExp = /[^0-9]/g;
 
         const errorMessage = () => {
             let error = "";
@@ -129,8 +129,7 @@ function App() {
 
         setData((prev) => ({
             ...prev,
-            option: "",
-            result: "",
+
             [name]: {
                 value: regExp.test(value)
                     ? prev[name].value
@@ -153,6 +152,7 @@ function App() {
     };
 
     const resultHandle = (value: string) => {
+        console.log("🚀 ~ resultHandle ~ value:", value);
         if (
             data.myRanking.value === "" ||
             data.opponentRanking.value === "" ||
@@ -251,7 +251,7 @@ function App() {
                         className="outline outline-blue-500 focus:outline-blue-700 focus:outline-2 px-2 py-1 rounded"
                         value={data.myRanking.value}
                         onChange={handleChange}
-                        onBlur={() => resultHandle(data.result)}
+                        onBlur={() => resultHandle(data.option)}
                     />
                 </label>
                 <label className="grid gap-4 relative pb-6">
@@ -266,7 +266,7 @@ function App() {
                         className="outline outline-blue-500  focus:outline-blue-700 focus:outline-2 px-2 py-1 rounded"
                         value={data.opponentRanking.value}
                         onChange={handleChange}
-                        onBlur={() => resultHandle(data.result)}
+                        onBlur={() => resultHandle(data.option)}
                     />
                 </label>
                 <fieldset className="p-4 border border-gray-300 rounded-lg">
