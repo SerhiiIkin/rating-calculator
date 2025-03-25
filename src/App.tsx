@@ -11,7 +11,10 @@ import { PiSmileySad } from "react-icons/pi";
 function App() {
     const myRankingRef = useRef(null);
     const opponentRankingRef = useRef(null);
+    const labelWinRef = useRef(null);
+
     const MAX_RANKING = 10000;
+
     type DataField = {
         value: string;
         error: string;
@@ -205,7 +208,14 @@ function App() {
     };
 
     const keyDownHandler = (event: KeyboardEvent<HTMLLabelElement>) => {
-        const code = event.code;
+        const { code } = event;
+        const { htmlFor } = event.target as HTMLLabelElement;
+
+        if (htmlFor === "vundet" && code === "ArrowUp") {
+            if (opponentRankingRef.current) {
+                (opponentRankingRef.current as HTMLInputElement).focus();
+            }
+        }
 
         if (code === "ArrowDown" || code === "ArrowRight") {
             (
@@ -246,6 +256,35 @@ function App() {
         }));
     };
 
+    const onKeyDownInputOpponentRanking = (
+        event: KeyboardEvent<HTMLInputElement>
+    ) => {
+        const { code } = event;
+
+        if (code === "ArrowUp") {
+            if (myRankingRef.current) {
+                (myRankingRef.current as HTMLInputElement).focus();
+            }
+        }
+        if (code === "ArrowDown") {
+            if (labelWinRef.current) {
+                (labelWinRef.current as HTMLInputElement).focus();
+            }
+        }
+    };
+
+    const onKeyDownInputMyRanking = (
+        event: KeyboardEvent<HTMLInputElement>
+    ) => {
+        const { code } = event;
+
+        if (code === "ArrowDown") {
+            if (opponentRankingRef.current) {
+                (opponentRankingRef.current as HTMLInputElement).focus();
+            }
+        }
+    };
+
     return (
         <>
             <title>Rangeringsberegner hjemmeside</title>
@@ -273,6 +312,7 @@ function App() {
                         value={data.myRanking.value}
                         onChange={handleChange}
                         onBlur={onBlurInput}
+                        onKeyDown={onKeyDownInputMyRanking}
                     />
                 </label>
                 <label className="grid gap-4 relative pb-6">
@@ -289,6 +329,7 @@ function App() {
                         value={data.opponentRanking.value}
                         onChange={handleChange}
                         onBlur={onBlurInput}
+                        onKeyDown={onKeyDownInputOpponentRanking}
                     />
                 </label>
                 <fieldset className="p-4 border border-gray-300 rounded-lg">
@@ -299,6 +340,7 @@ function App() {
                     <div className="flex flex-col gap-3">
                         {/* Vundet */}
                         <label
+                            ref={labelWinRef}
                             onKeyDown={keyDownHandler}
                             htmlFor="vundet"
                             tabIndex={0}
