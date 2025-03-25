@@ -1,8 +1,16 @@
-import { ChangeEvent, KeyboardEvent, useState } from "react";
+import {
+    ChangeEvent,
+    FocusEvent,
+    KeyboardEvent,
+    useRef,
+    useState,
+} from "react";
 import { CiFaceSmile } from "react-icons/ci";
 import { PiSmileySad } from "react-icons/pi";
 
 function App() {
+    const myRankingRef = useRef(null);
+    const opponentRankingRef = useRef(null);
     const MAX_RANKING = 10000;
     type DataField = {
         value: string;
@@ -152,7 +160,6 @@ function App() {
     };
 
     const resultHandle = (value: string) => {
-        console.log("🚀 ~ resultHandle ~ value:", value);
         if (
             data.myRanking.value === "" ||
             data.opponentRanking.value === "" ||
@@ -192,6 +199,7 @@ function App() {
 
         setData((prev) => ({
             ...prev,
+
             result: getResultValue(value as "1" | "0", condition),
         }));
     };
@@ -226,6 +234,18 @@ function App() {
         }
     };
 
+    const onBlurInput = (event: FocusEvent<HTMLInputElement>) => {
+        const { name, value } = event.target;
+        resultHandle(data.option);
+        setData((prev) => ({
+            ...prev,
+            [name]: {
+                value: value,
+                error: "",
+            },
+        }));
+    };
+
     return (
         <>
             <title>Rangeringsberegner hjemmeside</title>
@@ -244,6 +264,7 @@ function App() {
                         {data.myRanking.error}
                     </span>
                     <input
+                        ref={myRankingRef}
                         autoFocus
                         type="tel"
                         inputMode="numeric"
@@ -251,7 +272,7 @@ function App() {
                         className="outline outline-blue-500 focus:outline-blue-700 focus:outline-2 px-2 py-1 rounded"
                         value={data.myRanking.value}
                         onChange={handleChange}
-                        onBlur={() => resultHandle(data.option)}
+                        onBlur={onBlurInput}
                     />
                 </label>
                 <label className="grid gap-4 relative pb-6">
@@ -260,13 +281,14 @@ function App() {
                         {data.opponentRanking.error}
                     </span>
                     <input
+                        ref={opponentRankingRef}
                         type="tel"
                         inputMode="numeric"
                         name="opponentRanking"
                         className="outline outline-blue-500  focus:outline-blue-700 focus:outline-2 px-2 py-1 rounded"
                         value={data.opponentRanking.value}
                         onChange={handleChange}
-                        onBlur={() => resultHandle(data.option)}
+                        onBlur={onBlurInput}
                     />
                 </label>
                 <fieldset className="p-4 border border-gray-300 rounded-lg">
