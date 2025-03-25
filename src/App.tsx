@@ -1,4 +1,6 @@
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, KeyboardEvent, useState } from "react";
+import { CiFaceSmile } from "react-icons/ci";
+import { PiSmileySad } from "react-icons/pi";
 
 function App() {
     const MAX_RANKING = 10000;
@@ -111,6 +113,20 @@ function App() {
 
         const regExp = /[^0-9]/g;
 
+        const errorMessage = () => {
+            let error = "";
+            if (regExp.test(value)) {
+                error = "Indtast venligst et nummer";
+            }
+            if (+value >= MAX_RANKING) {
+                error = `Du må ikke taste et tal over ${MAX_RANKING}`;
+            }
+
+            return error;
+        };
+
+        errorMessage();
+
         setData((prev) => ({
             ...prev,
             option: "",
@@ -121,14 +137,12 @@ function App() {
                     : +value < MAX_RANKING
                     ? value.replace(/[^0-9]/g, "")
                     : prev[name].value,
-                error: regExp.test(value)
-                    ? "Indtast venligst et nummer"
-                    : +value < MAX_RANKING
-                    ? ""
-                    : `Du må ikke taste et tal over ${MAX_RANKING}`,
+                error: errorMessage(),
             },
         }));
     };
+
+    //`Du må ikke taste et tal over ${MAX_RANKING}`
 
     const radioHandle = (event: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
@@ -144,6 +158,7 @@ function App() {
         if (data.myRanking.value === "" || data.opponentRanking.value === "") {
             return;
         }
+
         const difference = Math.abs(
             Number(data.myRanking.value) - Number(data.opponentRanking.value)
         );
@@ -198,6 +213,20 @@ function App() {
         }
     };
 
+    const keyDownHandler = (event: KeyboardEvent<HTMLLabelElement>) => {
+        if (event.code === "Enter" || event.code === "Space") {
+            const value =
+                (event.target as HTMLLabelElement).htmlFor === "vundet"
+                    ? "1"
+                    : "0";
+            setData((prev) => ({
+                ...prev,
+                option: value,
+            }));
+            resultHandle(value);
+        }
+    };
+
     return (
         <>
             <title>Rangeringsberegner hjemmeside</title>
@@ -209,17 +238,18 @@ function App() {
             <h1 className="text-2xl font-bold text-center pb-4">
                 Rangeringsberegner
             </h1>
-            <div className="max-w-[calc(100dvh-10%)] mx-auto px-4 grid gap-4">
+            <div className="max-w-[calc(100dvh-10%)] mx-auto px-4 grid ">
                 <label className="grid gap-4 relative pb-6">
                     <span>Skriv din ranking: </span>
                     <span className="absolute bottom-0 left-2 text-red-500">
                         {data.myRanking.error}
                     </span>
                     <input
+                        autoFocus
                         type="tel"
                         inputMode="numeric"
                         name="myRanking"
-                        className="outline px-2 py-1 rounded"
+                        className="outline outline-blue-500 focus:outline-blue-700 focus:outline-2 px-2 py-1 rounded"
                         value={data.myRanking.value}
                         onChange={handleChange}
                         onBlur={() => resultHandle(data.result)}
@@ -234,33 +264,69 @@ function App() {
                         type="tel"
                         inputMode="numeric"
                         name="opponentRanking"
-                        className="outline px-2 py-1 rounded"
+                        className="outline outline-blue-500  focus:outline-blue-700 focus:outline-2 px-2 py-1 rounded"
                         value={data.opponentRanking.value}
                         onChange={handleChange}
                         onBlur={() => resultHandle(data.result)}
                     />
                 </label>
+                <fieldset className="p-4 border border-gray-300 rounded-lg">
+                    <legend className="pb-4 text-lg font-semibold text-gray-700">
+                        Er du vundet eller tabte kamp?
+                    </legend>
 
-                <label className="flex gap-4">
-                    <span>Er du vundet?</span>
-                    <input
-                        type="radio"
-                        name="option"
-                        value="1"
-                        checked={data.option === "1"}
-                        onChange={radioHandle}
-                    />
-                </label>
-                <label className="flex gap-4">
-                    <span>Er du tabte?</span>
-                    <input
-                        type="radio"
-                        name="option"
-                        value="0"
-                        checked={data.option === "0"}
-                        onChange={radioHandle}
-                    />
-                </label>
+                    <div className="flex flex-col gap-3">
+                        {/* Vundet */}
+                        <label
+                            onKeyDown={keyDownHandler}
+                            htmlFor="vundet"
+                            tabIndex={0}
+                            className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all
+        border-gray-300 hover:border-green-500 peer-checked:border-green-500 peer-checked:bg-blue-100">
+                            <input
+                                id="vundet"
+                                type="radio"
+                                name="option"
+                                value="1"
+                                checked={data.option === "1"}
+                                onChange={radioHandle}
+                                className="hidden peer"
+                            />
+                            <div className="w-5 h-5 border-2 border-gray-400 rounded-full flex items-center justify-center peer-checked:border-green-500 peer-checked:bg-green-500 transition-all">
+                                <div className="w-2.5 h-2.5 bg-white rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                            </div>
+                            <CiFaceSmile className="text-2xl text-green-500" />
+                            <span className="text-gray-700">
+                                Ja, jeg har vundet kampen
+                            </span>
+                        </label>
+
+                        {/* Tabt */}
+                        <label
+                            onKeyDown={keyDownHandler}
+                            htmlFor="tabt"
+                            tabIndex={0}
+                            className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all 
+        border-gray-300 hover:border-red-500 peer-checked:border-red-500 peer-checked:bg-red-100">
+                            <input
+                                type="radio"
+                                name="option"
+                                value="0"
+                                id="tabt"
+                                checked={data.option === "0"}
+                                onChange={radioHandle}
+                                className="hidden peer"
+                            />
+                            <div className="w-5 h-5 border-2 border-gray-400 rounded-full flex items-center justify-center peer-checked:border-red-500 peer-checked:bg-red-500 transition-all">
+                                <div className="w-2.5 h-2.5 bg-white rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                            </div>
+                            <PiSmileySad className="text-2xl text-red-500" />
+                            <span className="text-gray-700">
+                                Nej, jeg tabte
+                            </span>
+                        </label>
+                    </div>
+                </fieldset>
 
                 <div className="flex gap-2">
                     Din resultat:
