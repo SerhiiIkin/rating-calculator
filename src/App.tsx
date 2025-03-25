@@ -142,8 +142,6 @@ function App() {
         }));
     };
 
-    //`Du må ikke taste et tal over ${MAX_RANKING}`
-
     const radioHandle = (event: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
 
@@ -155,7 +153,11 @@ function App() {
     };
 
     const resultHandle = (value: string) => {
-        if (data.myRanking.value === "" || data.opponentRanking.value === "") {
+        if (
+            data.myRanking.value === "" ||
+            data.opponentRanking.value === "" ||
+            value === ""
+        ) {
             return;
         }
 
@@ -174,47 +176,44 @@ function App() {
             return;
         }
 
-        if (value === "1") {
-            if (+data.myRanking.value < +data.opponentRanking.value) {
-                setData((prev) => ({
-                    ...prev,
-                    result:
-                        res?.uventetGevinst == 0
-                            ? `${res?.uventetGevinst}`
-                            : `+${res?.uventetGevinst}`,
-                }));
-            } else {
-                setData((prev) => ({
-                    ...prev,
-                    result:
-                        res?.ventetGevinst == 0
-                            ? `${res?.ventetGevinst}`
-                            : `+${res?.ventetGevinst}`,
-                }));
-            }
-        } else if (value === "0") {
-            if (+data.myRanking.value < +data.opponentRanking.value) {
-                setData((prev) => ({
-                    ...prev,
-                    result:
-                        res?.ventetFradrag == 0
-                            ? `${res?.ventetFradrag}`
-                            : `-${res?.ventetFradrag}`,
-                }));
-            } else {
-                setData((prev) => ({
-                    ...prev,
-                    result:
-                        res?.uventetFradrag == 0
-                            ? `${res?.uventetFradrag}`
-                            : `-${res?.uventetFradrag}`,
-                }));
-            }
-        }
+        const condition = +data.myRanking.value < +data.opponentRanking.value;
+
+        const getResultValue = (value: "1" | "0", condition: boolean) => {
+            const resultMap = {
+                "1": condition ? res?.uventetGevinst : res?.ventetGevinst,
+                "0": condition ? res?.ventetFradrag : res?.uventetFradrag,
+            };
+
+            const result = resultMap[value] ?? 0;
+            return result === 0
+                ? `${result}`
+                : `${value === "1" ? "+" : "-"}${result}`;
+        };
+
+        setData((prev) => ({
+            ...prev,
+            result: getResultValue(value as "1" | "0", condition),
+        }));
     };
 
     const keyDownHandler = (event: KeyboardEvent<HTMLLabelElement>) => {
-        if (event.code === "Enter" || event.code === "Space") {
+        const code = event.code;
+
+        if (code === "ArrowDown" || code === "ArrowRight") {
+            (
+                (event.target as HTMLLabelElement)
+                    .nextElementSibling as HTMLElement
+            )?.focus?.();
+        }
+
+        if (code === "ArrowLeft" || code === "ArrowUp") {
+            (
+                (event.target as HTMLLabelElement)
+                    .previousElementSibling as HTMLElement
+            )?.focus?.();
+        }
+
+        if (code === "Enter" || code === "Space") {
             const value =
                 (event.target as HTMLLabelElement).htmlFor === "vundet"
                     ? "1"
