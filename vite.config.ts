@@ -11,7 +11,7 @@ export default defineConfig({
         tailwindcss(),
         compression(),
         sitemap({
-            hostname: "https://yourdomain.com",
+            hostname: "https://rating-calculator-sable.vercel.app",
         }),
     ],
 });
