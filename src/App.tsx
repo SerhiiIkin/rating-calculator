@@ -1,7 +1,6 @@
 import { ChangeEvent, KeyboardEvent, useRef, useState } from "react";
 import { CiFaceSmile } from "react-icons/ci";
 import { PiSmileySad } from "react-icons/pi";
-import { debounce } from "lodash";
 
 type DataField = {
     value: string;
