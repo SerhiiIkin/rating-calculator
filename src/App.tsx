@@ -1,12 +1,20 @@
-import {
-    ChangeEvent,
-    FocusEvent,
-    KeyboardEvent,
-    useRef,
-    useState,
-} from "react";
+import { ChangeEvent, KeyboardEvent, useRef, useState } from "react";
 import { CiFaceSmile } from "react-icons/ci";
 import { PiSmileySad } from "react-icons/pi";
+import { debounce } from "lodash";
+
+type DataField = {
+    value: string;
+    error: string;
+};
+
+type DataType = {
+    [key: string]: DataField | string;
+    myRanking: DataField;
+    opponentRanking: DataField;
+    option: string;
+    result: string;
+};
 
 function App() {
     const myRankingRef = useRef(null);
@@ -14,19 +22,6 @@ function App() {
     const labelWinRef = useRef(null);
 
     const MAX_RANKING = 10000;
-
-    type DataField = {
-        value: string;
-        error: string;
-    };
-
-    type DataType = {
-        [key: string]: DataField | string;
-        myRanking: DataField;
-        opponentRanking: DataField;
-        option: string;
-        result: string;
-    };
 
     const tableData = [
         {
@@ -116,6 +111,20 @@ function App() {
         result: "",
     });
 
+    const validateInput = (value: string) => {
+        const regExp = /[^0-9]/g;
+        let error = "";
+
+        if (regExp.test(value)) {
+            error = "Indtast venligst et nummer";
+        }
+        if (+value >= MAX_RANKING) {
+            error = `Du må ikke taste et tal over ${MAX_RANKING}`;
+        }
+
+        return error;
+    };
+
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
         const regExp = /[^0-9]/g;
@@ -124,31 +133,27 @@ function App() {
             return;
         }
 
-        const errorMessage = () => {
-            let error = "";
-            if (regExp.test(value)) {
-                error = "Indtast venligst et nummer";
-            }
-            if (+value >= MAX_RANKING) {
-                error = `Du må ikke taste et tal over ${MAX_RANKING}`;
-            }
-
-            return error;
-        };
-
-        errorMessage();
+        const error = validateInput(value);
 
         setData((prev) => ({
             ...prev,
-
             [name]: {
                 value: regExp.test(value)
                     ? prev[name].value
                     : +value < MAX_RANKING
                     ? value.replace(/[^0-9]/g, "")
                     : prev[name].value,
-                error: errorMessage(),
+                error,
             },
+            result: getResultValue({
+                option: data.option,
+                myRankingValue:
+                    name === "myRanking" ? value : data.myRanking.value,
+                opponentRankingValue:
+                    name === "opponentRanking"
+                        ? value
+                        : data.opponentRanking.value,
+            }),
         }));
     };
 
@@ -159,51 +164,67 @@ function App() {
             ...prev,
             [name]: value,
         }));
-        resultHandle(value);
+        resultHandle({
+            option: value,
+            myRankingValue: data.myRanking.value,
+            opponentRankingValue: data.opponentRanking.value,
+        });
     };
 
-    const resultHandle = (value: string) => {
-        if (
-            data.myRanking.value === "" ||
-            data.opponentRanking.value === "" ||
-            value === ""
-        ) {
-            return;
-        }
+    const getResultValue = ({
+        option,
+        myRankingValue,
+        opponentRankingValue,
+    }: {
+        option: string;
+        myRankingValue: string;
+        opponentRankingValue: string;
+    }) => {
+        if (myRankingValue === "" || opponentRankingValue === "") return "";
 
         const difference = Math.abs(
-            Number(data.myRanking.value) - Number(data.opponentRanking.value)
+            Number(myRankingValue) - Number(opponentRankingValue)
         );
         const res = tableData.find(
             (item) => item.min <= difference && difference <= item.max
         );
 
-        if (!res) {
-            setData((prev) => ({
-                ...prev,
-                result: "",
-            }));
+        const condition = +myRankingValue < +opponentRankingValue;
+        const resultMap = {
+            "1": condition ? res?.uventetGevinst : res?.ventetGevinst,
+            "0": condition ? res?.ventetFradrag : res?.uventetFradrag,
+        };
+
+        const result = resultMap[option as "0" | "1"] ?? 0;
+        return result === 0
+            ? `${result}`
+            : `${option === "1" ? "+" : "-"}${result}`;
+    };
+
+    const resultHandle = ({
+        option,
+        myRankingValue,
+        opponentRankingValue,
+    }: {
+        option: string;
+        myRankingValue: string;
+        opponentRankingValue: string;
+    }) => {
+        if (
+            myRankingValue === "" ||
+            opponentRankingValue === "" ||
+            option === ""
+        ) {
             return;
         }
 
-        const condition = +data.myRanking.value < +data.opponentRanking.value;
-
-        const getResultValue = (value: "1" | "0", condition: boolean) => {
-            const resultMap = {
-                "1": condition ? res?.uventetGevinst : res?.ventetGevinst,
-                "0": condition ? res?.ventetFradrag : res?.uventetFradrag,
-            };
-
-            const result = resultMap[value] ?? 0;
-            return result === 0
-                ? `${result}`
-                : `${value === "1" ? "+" : "-"}${result}`;
-        };
-
         setData((prev) => ({
             ...prev,
-
-            result: getResultValue(value as "1" | "0", condition),
+            result: getResultValue({
+                option,
+                myRankingValue,
+                opponentRankingValue,
+            }),
         }));
     };
 
@@ -240,20 +261,12 @@ function App() {
                 ...prev,
                 option: value,
             }));
-            resultHandle(value);
+            resultHandle({
+                option: value,
+                myRankingValue: data.myRanking.value,
+                opponentRankingValue: data.opponentRanking.value,
+            });
         }
-    };
-
-    const onBlurInput = (event: FocusEvent<HTMLInputElement>) => {
-        const { name, value } = event.target;
-        resultHandle(data.option);
-        setData((prev) => ({
-            ...prev,
-            [name]: {
-                value: value,
-                error: "",
-            },
-        }));
     };
 
     const onKeyDownInputOpponentRanking = (
@@ -286,13 +299,12 @@ function App() {
     };
 
     return (
-        <>
+        <section className="py-4">
             <title>Rangeringsberegner hjemmeside</title>
             <meta
                 name="description"
                 content="Rangering beregner hjemmeside, hvor du kan beregne din rangeringsgreb after kamp du vundet eller tabte"
             />
-
             <h1 className="text-2xl font-bold text-center pb-4">
                 Rangeringsberegner
             </h1>
@@ -311,7 +323,6 @@ function App() {
                         className="outline outline-blue-500 focus:outline-blue-700 focus:outline-2 px-2 py-1 rounded"
                         value={data.myRanking.value}
                         onChange={handleChange}
-                        onBlur={onBlurInput}
                         onKeyDown={onKeyDownInputMyRanking}
                     />
                 </label>
@@ -328,7 +339,6 @@ function App() {
                         className="outline outline-blue-500  focus:outline-blue-700 focus:outline-2 px-2 py-1 rounded"
                         value={data.opponentRanking.value}
                         onChange={handleChange}
-                        onBlur={onBlurInput}
                         onKeyDown={onKeyDownInputOpponentRanking}
                     />
                 </label>
@@ -336,9 +346,7 @@ function App() {
                     <legend className="pb-4 text-lg font-semibold text-gray-700">
                         Er du vundet eller tabte kamp?
                     </legend>
-
                     <div className="flex flex-col gap-3">
-                        {/* Vundet */}
                         <label
                             ref={labelWinRef}
                             onKeyDown={keyDownHandler}
@@ -363,8 +371,6 @@ function App() {
                                 Ja, jeg har vundet kampen
                             </span>
                         </label>
-
-                        {/* Tabt */}
                         <label
                             onKeyDown={keyDownHandler}
                             htmlFor="tabt"
@@ -390,7 +396,6 @@ function App() {
                         </label>
                     </div>
                 </fieldset>
-
                 <div className="flex gap-2">
                     Din resultat:
                     <span
@@ -405,7 +410,7 @@ function App() {
                     </span>
                 </div>
             </div>
-        </>
+        </section>
     );
 }
 
