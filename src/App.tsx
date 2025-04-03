@@ -179,7 +179,7 @@ function App() {
         myRankingValue: string;
         opponentRankingValue: string;
     }) => {
-        if (myRankingValue === "" || opponentRankingValue === "") return "";
+        if (myRankingValue === "" || opponentRankingValue === "" || option === "") return "";
 
         const difference = Math.abs(
             Number(myRankingValue) - Number(opponentRankingValue)
