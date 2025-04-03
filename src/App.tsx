@@ -179,7 +179,12 @@ function App() {
         myRankingValue: string;
         opponentRankingValue: string;
     }) => {
-        if (myRankingValue === "" || opponentRankingValue === "" || option === "") return "";
+        if (
+            myRankingValue === "" ||
+            opponentRankingValue === "" ||
+            option === ""
+        )
+            return "";
 
         const difference = Math.abs(
             Number(myRankingValue) - Number(opponentRankingValue)
@@ -326,7 +331,7 @@ function App() {
                     />
                 </label>
                 <label className="grid gap-4 relative pb-6">
-                    <span>Skriv modstander ranking: </span>
+                    <span>Skriv modstanderens ranking:: </span>
                     <span className="absolute bottom-0 left-2 text-red-500">
                         {data.opponentRanking.error}
                     </span>
@@ -343,7 +348,7 @@ function App() {
                 </label>
                 <fieldset className="p-4 border border-gray-300 rounded-lg">
                     <legend className="pb-4 text-lg font-semibold text-gray-700">
-                        Er du vundet eller tabte kamp?
+                        Har du vundet eller tabt kampen?
                     </legend>
                     <div className="flex flex-col gap-3">
                         <label
@@ -390,13 +395,13 @@ function App() {
                             </div>
                             <PiSmileySad className="text-2xl text-red-500" />
                             <span className="text-gray-700">
-                                Nej, jeg tabte
+                                Nej, jeg har tabt kampen
                             </span>
                         </label>
                     </div>
                 </fieldset>
                 <div className="flex gap-2">
-                    Din resultat:
+                    Dit resultat:
                     <span
                         className={
                             +data.result > 0
